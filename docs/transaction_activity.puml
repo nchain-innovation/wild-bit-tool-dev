@@ -1,0 +1,59 @@
+@startumltitle :transaction;
+start
+if (command) then (input file)
+
+
+' if (input file) then (yes)
+  : build transaction;
+  if (broadcast) then (yes)
+    : broadcast transaction;
+    if (success) then (yes)
+      : print transaction id;
+    else (no)
+      : print failure;
+    endif 
+
+  else (no)
+    : print to screen;
+  endif
+else (generate parameters)
+'   if (generate parameters) then (yes)
+    : add network configuration;
+    if (amount & sender) then (yes)
+        : add vins;
+        if (receiver) then (yes)
+            : add vouts;
+            if (change address) then (yes)
+                ' : add vouts;
+                : add tx info;
+                if (write to file) then (yes)
+                    if (append) then (yes)
+                        : append to file;
+                    else (no)
+                        : write to file;
+                    endif
+                else (no)
+                    : print to screen;
+                endif
+            else (no)
+            endif
+        else (no)
+        endif
+    else (no)
+    endif
+    
+'   else (no)
+
+
+endif
+
+' else (no-op) 
+' endif
+
+
+end
+
+
+
+' Bob -> Alice : hello
+@enduml

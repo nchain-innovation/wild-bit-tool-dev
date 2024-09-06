@@ -1,0 +1,5 @@
+toml
+coincurve
+bitcoinrpc
+python-bitcoinrpc
+docker
