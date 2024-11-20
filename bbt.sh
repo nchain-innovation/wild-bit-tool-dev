@@ -3,7 +3,8 @@
 # Wrapper script for running the image locally (Linux/Mac)
 
 # Image name
-IMAGE_NAME="nchain/rnd-prototyping-wildbittool:v1.0"
+# IMAGE_NAME="nchain/rnd-prototyping-wildbittool:v1.0"
+IMAGE_NAME=wildbittool
 
 
 # RegTest only: network name

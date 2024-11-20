@@ -1,10 +1,12 @@
 from useful import network_to_key_type, load_key_from_file
 from transaction import build_tx, broadcast_tx
 
-from useful import write_to_file, write_to_stdout, add_network_type_to_config
+from useful import write_to_file, write_to_stdout, add_interface_to_config
 from key_functions import set_regtest_config
 
-from tx_engine.tx.bsv_factory import bsv_factory
+# from tx_engine.tx.bsv_factory import bsv_factory
+# from tx_engine import interface_factory
+from tx_engine import interface_factory, WoCInterface
 
 class TransactionCommand:
     def __init__(self, paramfile=None, 
@@ -34,14 +36,23 @@ class TransactionCommand:
         self.change = change
         self.key_type = network_to_key_type(self.network)
 
-        config = {"type":network}
+        # config = {"type":network}
 
         # if network is running in docker, aka in-a-sandbox 
         if network == 'regtest':
+            print("JAS: NOT IMPLEMENTED YET")
             network = 'insandbox'
             set_regtest_config(config)
 
-        self.bsv_client = bsv_factory.set_config(config)
+        # self.bsv_client = bsv_factory.set_config(config)
+
+        config = {
+            "interface_type": "woc",
+            "network_type": self.network,
+        }
+
+        self.interface = interface_factory.set_config(config)
+        print("JAS: Interface type: ", type(self.interface))
 
 
     # --------------------------------------------------------------
@@ -50,6 +61,7 @@ class TransactionCommand:
 
         print(f'\n  -> Running bbt transaction,   input file={self.paramfile}, network={self.network}')
 
+        # print("JAS: DEBUG: config: ", self.config)
         tx = None 
 
         # Build transaction
@@ -76,7 +88,9 @@ class TransactionCommand:
     # Get UTXO's for an amount
     def utxo_amount(self, address, amount):
 
-        unspent = self.bsv_client.get_utxo(address)
+        # unspent = self.bsv_client.get_utxo(address)
+        unspent = self.interface.get_utxo(address)
+
 
         sum = 0
         vin = []
@@ -100,13 +114,15 @@ class TransactionCommand:
 
             key_type = network_to_key_type(self.network)
             key_for_signing, sender_address  = load_key_from_file(self.sender_key, toml_, key_type)
+            print(f"JAS: DEBUG: key_for_signing: {key_for_signing}, sender_address: {sender_address}")
+            self.sender = sender_address
 
         elif self.sender:
             sender_address = self.sender
 
         # get balance for the sender 
-        sb = self.bsv_client.get_balance(sender_address)
-        print('JAS: sender_balance', sb)
+        # sb = self.bsv_client.get_balance(sender_address)
+        sb = self.interface.get_balance(sender_address)
         sender_balance = int(sb['confirmed']) + int(sb['unconfirmed'])
 
         # check if sender has enough balance to send amount
@@ -139,7 +155,9 @@ class TransactionCommand:
         data_dict = {}
 
         # add network type to config
-        add_network_type_to_config(data_dict, self.network)
+        # add_network_type_to_config(data_dict, self.network)
+        add_interface_to_config(data_dict, self.network)
+        print("JAS: DEBUG: data_dict: ", data_dict)
 
         if self.sender:
             sender_address = self.sender

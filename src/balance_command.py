@@ -1,5 +1,6 @@
-from useful import load_key_from_file, set_regtest_config, list_keys
-from tx_engine.tx.bsv_factory import (bsv_factory, BSVClient)
+from useful import load_key_from_file, set_regtest_config, list_keys, network_to_key_type
+# from tx_engine.tx.bsv_factory import (bsv_factory, BSVClient)
+from tx_engine import interface_factory, WoCInterface
 
 
 
@@ -19,18 +20,8 @@ class BalanceCommand:
         self.inform = inform
         self.all = all
 
-        if network == 'regtest':
-            self.network = 'insandbox'
-            self.key_type = 'test'
-        elif network == 'mainnet':
-            self.key_type = 'main'
-        elif network == 'testnet':
-            self.key_type = 'test'
-        elif network == 'mock':
-            self.key_type = 'test'
-        else:
-            print(f"Invalid network type: {network}")
-            exit(1)
+        self.key_type = network_to_key_type(network)
+
 
 
     # get balance of a bitcoin address
@@ -39,14 +30,19 @@ class BalanceCommand:
             print("Error: No address provided.")
             return
 
-        config = {"type":self.network}
+        # TODO: fix the regtest config
+
+        config = {
+            "interface_type": "woc",
+            "network_type": self.network,
+        }
 
         # if network is running in docker, aka in-a-sandbox
-        if config['type'] == 'insandbox':
-            set_regtest_config(config)
-
-        bsv_client = bsv_factory.set_config(config)
-        balance = bsv_client.get_balance(self.address)
+        # if config['type'] == 'insandbox':
+            # set_regtest_config(config)
+        
+        interface = interface_factory.set_config(config)
+        balance = interface.get_balance(self.address)
         return balance
     
     def print_balance(self):
@@ -68,7 +64,8 @@ class BalanceCommand:
             toml_ = False
 
         key = load_key_from_file(self.input_file, toml_, self.key_type)
-        self.address = key[1]
+        # self.address = key.get_address()
+        self.address = key[1] 
         return
 
 

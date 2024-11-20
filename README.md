@@ -19,7 +19,7 @@ Optional:
 
 Try running the help command:
 
-`./bbt.sh -h`
+`./wbt.sh -h`
 
 ## Digging Deeper
 

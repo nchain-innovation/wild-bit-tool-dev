@@ -66,7 +66,7 @@ class KeyCommand:
             # read parameter file
             data_dict = read_file(self.param_file)
 
-            if data_dict['key_input']:
+            if 'key_input' in data_dict:
                 # check if seed and nonce are provided
                 if 'seed' in data_dict['key_input'] and 'nonce' in data_dict['key_input']:
                     self.seed = data_dict['key_input']['seed']
@@ -75,26 +75,24 @@ class KeyCommand:
                     print(f'Error: seed and nonce required to generate key, not found in {self.param_file} file. Exiting...\n')
                     exit(1)
 
-        pem = False
-        if self.outform == 'pem':
-            pem = True
+            else:
+                print(f'Error: key_input not found in {self.param_file} file. Exiting...\n')
+                exit(1)
+
+        pem = self.outform == 'pem'
 
         print (f'\n  -> Running bbt key, seed={self.seed}, nonce={self.nonce}, network={self.network}')
         key = generate_key(self.seed, self.nonce, network=self.network, pem=pem)
 
         # write to file or stdout; default is stdout
         # format is toml unless pem is specified  
-        is_toml = True
-
-        if self.outform == 'pem':
-            is_toml = False
-            key = key.decode()
+        is_toml = not pem
 
         if self.output_file:
-                print (f"writing to file {self.output_file}")
-                write_to_file(self.output_file, key, is_toml)
+            print (f"writing to file {self.output_file}")
+            write_to_file(self.output_file, key, is_toml)
         else:
-                write_to_stdout(key, is_toml)
+            write_to_stdout(key, is_toml)
         return
 
 
@@ -108,7 +106,6 @@ class KeyCommand:
         elif self.param_file or (self.seed and self.nonce):
             self.generate_key()
             exit(0)
-           
        
         # list all keys
         elif self.list_all:
@@ -120,6 +117,3 @@ class KeyCommand:
         else:
             print ("Error: seed and nonce required to generate key")
             exit(1)
-
-
-

@@ -1,5 +1,6 @@
 from useful import network_to_key_type, load_key_from_file
-from tx_engine.engine.keys import wif_to_key
+# from tx_engine.engine.keys import wif_to_key
+from tx_engine import Wallet
 
 class AddressCommand:
     def __init__(self, private_key, network, input_file, inform):
@@ -14,10 +15,11 @@ class AddressCommand:
     # and writes out the public key (address)
     def private_key_to_public_key(self, private_key):
         try:
-            myPrivKey = wif_to_key(private_key, network=self.key_type)
+            # myPrivKey = wif_to_key(private_key, network=self.key_type)
+            myPrivKey = Wallet(private_key)
 
             print('\n------------------------------------------------------------------------------------')
-            print('Address (public key) \t-> ', myPrivKey.address)
+            print('Address (public key) \t-> ', myPrivKey.get_address())
             print('------------------------------------------------------------------------------------\n')
         
         except Exception as e:

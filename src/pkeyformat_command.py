@@ -1,7 +1,8 @@
 
 # from useful import wif_to_key, key_to_wif
 from useful import load_key_from_file
-from tx_engine.engine.keys import (PrivateKey, key_to_wif, wif_to_key)
+# from tx_engine.engine.keys import (PrivateKey, key_to_wif, wif_to_key)
+from tx_engine import Wallet
 
 class PkeyformatCommand:
 

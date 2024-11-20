@@ -1,5 +1,2 @@
-toml
-coincurve
-bitcoinrpc
-python-bitcoinrpc
-docker
+toml==0.10.2
+tx_engine==0.6.8

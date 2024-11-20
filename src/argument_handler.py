@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 from typing import MutableMapping, Any
 
@@ -14,7 +15,12 @@ from useful import address_regex_type
 
 
 # Specify the directory path
-path = r'/app/data'
+# path = r'/app/data'
+# set directory path to the environment variable or default to /app/data
+if 'DATA_PATH' in os.environ:
+    path = os.environ['DATA_PATH']
+else:
+    path = '/app/data'
 
 # -------------------------------------------------------------------
 # -------------------------------------------------------------------

@@ -13,8 +13,10 @@ else:
     path = '/app/data'
 
 
-from tx_engine.tx.bsv_factory import (bsv_factory, BSVClient)
-from tx_engine.engine.keys import (PrivateKey, key_to_wif, wif_to_key)
+# from tx_engine.tx.bsv_factory import (bsv_factory, BSVClient)
+from tx_engine import interface_factory 
+# from tx_engine.engine.keys import (PrivateKey, key_to_wif, wif_to_key)
+from tx_engine import Wallet, create_pem_from_wallet
 from useful import set_regtest_config
 
 
@@ -23,13 +25,17 @@ def generate_key(nameSeed, nonce, network='testnet', pem=False):
     dk = hashlib.pbkdf2_hmac('sha256', nameSeed.encode('utf-8'), nonce.encode('utf-8'), 100000)
 
     key_type = network_to_key_type(network)
-    myPrivKey = PrivateKey.from_int(int(dk.hex(), 16), network=key_type)
+    myPrivKey = Wallet.from_int(network=key_type, int_rep=int(dk.hex(), 16) )
+
     if pem:
-        return (myPrivKey.to_pem())
+        # print("JAS: NOT IMPLEMENTED")
+        # exit (1)
+        return (create_pem_from_wallet(myPrivKey))
+        # return (myPrivKey.to_pem())
     else:
         return  {'key_info': 
-                    {'private_key': key_to_wif(myPrivKey), 
-                    'bitcoin_address': myPrivKey.address
+                    {'private_key': Wallet.to_wif(myPrivKey), 
+                    'bitcoin_address': myPrivKey.get_address()
                     }
                 }
 
@@ -45,7 +51,8 @@ def balance(address, network):
         set_regtest_config(config)
 
 
-    bsv_client = bsv_factory.set_config(config)
+    bsv_client = interface_factory.set_config(config)
+    # bsv_client = bsv_factory.set_config(config)
 
     test_balance = bsv_client.get_balance(address)
     print('\n------------------------------------------------------------------------------------')
@@ -65,8 +72,8 @@ def utxo(address, network):
     if config['type'] == 'insandbox':
         set_regtest_config(config)
 
-
-    bsv_client = bsv_factory.set_config(config)
+    bsv_client = interface_factory.set_config(config)
+    # bsv_client = bsv_factory.set_config(config)
 
     unspent = bsv_client.get_utxo(address)
     print('\n<-------------------------------------------------------->\n')
