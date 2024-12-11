@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
-import sys
-from argument_handler import ArgumentHandler
+
 
 def run_tests(test_class):
     suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
@@ -59,7 +58,7 @@ class TestArgumentHandler(unittest.TestCase):
 
 # Next test - transaction parameters
     # # ------------------------------------------------------------------------------------
-    # # Test warning of genparam with broadcast 
+    # # Test warning of genparam with broadcast
     # # bbt transaction -genparam --broadcast false
     # @patch('sys.stdout', new_callable=StringIO)
     # def test_genparam_broadcast_warning(self, mock_stdout):
@@ -83,4 +82,3 @@ class TestArgumentHandler(unittest.TestCase):
 
     #     # Check if the expected output is in the printed output
     #     self.assertIn(expected_output, output)
-

@@ -1,4 +1,4 @@
-from useful import write_to_file, write_to_stdout, read_file, print_keys
+from useful import write_to_file, write_to_stdout, read_toml_file, print_keys
 from key_functions import generate_key
 import os
 
@@ -10,16 +10,15 @@ else:
 
 
 class KeyCommand:
-    def __init__(self, 
-                 seed=None, 
-                 nonce=None, 
-                 output_file=None, 
-                 param_file=None, 
+    def __init__(self,
+                 seed=None,
+                 nonce=None,
+                 output_file=None,
+                 param_file=None,
                  genparam=None,
-                 outform='toml', 
+                 outform='toml',
                  list_all=None,
                  network='testnet'):
-        
         self.seed = seed
         self.nonce = nonce
         self.output_file = output_file
@@ -28,7 +27,7 @@ class KeyCommand:
         self.outform = outform
         self.list_all = list_all
         self.network = network
-        
+
     # generate parameters from seed and nonce
     def generate_parameters(self):
         # check if seed and nonce are provided
@@ -56,15 +55,13 @@ class KeyCommand:
             write_to_stdout(data_dict, toml)
         return
 
-
     # generate key from seed and nonce
     def generate_key(self):
-
         # check if a parameter file is provided
         if self.param_file:
 
             # read parameter file
-            data_dict = read_file(self.param_file)
+            data_dict = read_toml_file(self.param_file)
 
             if 'key_input' in data_dict:
                 # check if seed and nonce are provided
@@ -81,20 +78,19 @@ class KeyCommand:
 
         pem = self.outform == 'pem'
 
-        print (f'\n  -> Running bbt key, seed={self.seed}, nonce={self.nonce}, network={self.network}')
+        print(f'\n  -> Running bbt key, seed={self.seed}, nonce={self.nonce}, network={self.network}')
         key = generate_key(self.seed, self.nonce, network=self.network, pem=pem)
 
         # write to file or stdout; default is stdout
-        # format is toml unless pem is specified  
+        # format is toml unless pem is specified
         is_toml = not pem
 
         if self.output_file:
-            print (f"writing to file {self.output_file}")
+            print(f"writing to file {self.output_file}")
             write_to_file(self.output_file, key, is_toml)
         else:
             write_to_stdout(key, is_toml)
         return
-
 
     def run(self):
         # generate parameter file from command line parameters
@@ -106,14 +102,13 @@ class KeyCommand:
         elif self.param_file or (self.seed and self.nonce):
             self.generate_key()
             exit(0)
-       
+
         # list all keys
         elif self.list_all:
-            print (f'\n  -> Running bbt key, list all, network={self.network}')
-        
+            print(f'\n  -> Running bbt key, list all, network={self.network}')
             print_keys(network=self.network)
             exit(0)
 
         else:
-            print ("Error: seed and nonce required to generate key")
+            print("Error: seed and nonce required to generate key")
             exit(1)

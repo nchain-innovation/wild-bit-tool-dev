@@ -2,26 +2,26 @@ from useful import network_to_key_type, load_key_from_file
 from transaction import build_tx, broadcast_tx
 
 from useful import write_to_file, write_to_stdout, add_interface_to_config
-from key_functions import set_regtest_config
+# from key_functions import set_regtest_config
 
-# from tx_engine.tx.bsv_factory import bsv_factory
-# from tx_engine import interface_factory
-from tx_engine import interface_factory, WoCInterface
+from tx_engine import interface_factory
+from typing import Any, Dict
+
 
 class TransactionCommand:
-    def __init__(self, paramfile=None, 
-                 genparam=False, 
-                 out=None, 
-                 broadcast='true', 
-                 network='testnet', 
-                 amount=None, 
-                 sender=None, 
-                 sender_key=None, 
-                 inform='toml', 
-                 fee=300, 
-                 recipient=None, 
+    def __init__(self, paramfile=None,
+                 genparam=False,
+                 out=None,
+                 broadcast='true',
+                 network='testnet',
+                 amount=None,
+                 sender=None,
+                 sender_key=None,
+                 inform='toml',
+                 fee=300,
+                 recipient=None,
                  change=None):
-        
+
         self.paramfile = paramfile
         self.genparam = genparam
         self.out = out
@@ -36,33 +36,31 @@ class TransactionCommand:
         self.change = change
         self.key_type = network_to_key_type(self.network)
 
-        # config = {"type":network}
-
-        # if network is running in docker, aka in-a-sandbox 
+        # if network is running in docker, aka in-a-sandbox
         if network == 'regtest':
             print("JAS: NOT IMPLEMENTED YET")
-            network = 'insandbox'
-            set_regtest_config(config)
+            raise NotImplementedError
 
-        # self.bsv_client = bsv_factory.set_config(config)
-
-        config = {
-            "interface_type": "woc",
-            "network_type": self.network,
-        }
+        if self.network == "mock":
+            config = {
+                "interface_type": "mock",
+                "network_type": self.network
+            }
+        else:
+            config = {
+                "interface_type": "woc",
+                "network_type": self.network,
+            }
 
         self.interface = interface_factory.set_config(config)
-        print("JAS: Interface type: ", type(self.interface))
-
 
     # --------------------------------------------------------------
     # Create transaction from input file
-    def create_transaction(self): 
-
+    def create_transaction(self):
         print(f'\n  -> Running bbt transaction,   input file={self.paramfile}, network={self.network}')
 
         # print("JAS: DEBUG: config: ", self.config)
-        tx = None 
+        tx = None
 
         # Build transaction
         try:
@@ -83,15 +81,10 @@ class TransactionCommand:
         else:
             print('\nNot broadcasting transaction')
 
-
     # --------------------------------------------------------------
     # Get UTXO's for an amount
     def utxo_amount(self, address, amount):
-
-        # unspent = self.bsv_client.get_utxo(address)
         unspent = self.interface.get_utxo(address)
-
-
         sum = 0
         vin = []
         i = 0
@@ -101,26 +94,24 @@ class TransactionCommand:
             i += 1
 
         return vin
-    
 
     # --------------------------------------------------------------
     def find_inputs(self, data_dict):
         key_for_signing = "<key for signing>"
-        
         if self.sender_key:
             toml_ = True
             if (self.inform == 'pem'):
                 toml_ = False
 
             key_type = network_to_key_type(self.network)
-            key_for_signing, sender_address  = load_key_from_file(self.sender_key, toml_, key_type)
-            print(f"JAS: DEBUG: key_for_signing: {key_for_signing}, sender_address: {sender_address}")
+            key_for_signing, sender_address = load_key_from_file(self.sender_key, toml_, key_type)
+            # print(f"JAS: DEBUG: key_for_signing: {key_for_signing}, sender_address: {sender_address}")
             self.sender = sender_address
 
         elif self.sender:
             sender_address = self.sender
 
-        # get balance for the sender 
+        # get balance for the sender
         # sb = self.bsv_client.get_balance(sender_address)
         sb = self.interface.get_balance(sender_address)
         sender_balance = int(sb['confirmed']) + int(sb['unconfirmed'])
@@ -138,7 +129,6 @@ class TransactionCommand:
         data_dict['transactioninput'] = []
 
         for utxo in sender_utxo:
-            
             data_dict['transactioninput'].append({
                 'tx_hash': utxo['tx_hash'],
                 'tx_pos': utxo['tx_pos'],
@@ -146,18 +136,15 @@ class TransactionCommand:
                 'private_key_for_signing': key_for_signing
             })
 
-
     # --------------------------------------------------------------
     # Generate transaction parameters
     def generate_parameters(self):
         print('Generating parameters')
-
-        data_dict = {}
-
+        data_dict: Dict[Any, Any] = {}
         # add network type to config
         # add_network_type_to_config(data_dict, self.network)
         add_interface_to_config(data_dict, self.network)
-        print("JAS: DEBUG: data_dict: ", data_dict)
+        # print("JAS: DEBUG: data_dict: ", data_dict)
 
         if self.sender:
             sender_address = self.sender
@@ -193,7 +180,6 @@ class TransactionCommand:
         # add fee
         data_dict['tx_info']['tx_default_fee'] = self.fee
 
-
         # write to file or stdout; default is stdout
         if self.out:
             write_to_file(self.out, data_dict)
@@ -201,15 +187,12 @@ class TransactionCommand:
         else:
             write_to_stdout(data_dict)
 
-
     # --------------------------------------------------------------
     # Run the command
     def run(self):
-
         # if parameter file is provided, use this to create transaction
         if self.paramfile:
             self.create_transaction()
-            
 
         # generate parameter file from command line parameters
         elif self.genparam:
@@ -219,6 +202,3 @@ class TransactionCommand:
             print('Error: input file or parameters required to generate transaction')
             print('Use -h or --help for help')
             exit(1)
-
-
-    
