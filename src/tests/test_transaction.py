@@ -222,7 +222,7 @@ tx_default_fee = 300
     # Test genparam with amount flag and sender_key flag
     # bbt transaction -genparam --amount 1000 -sender_key alice.key
     @patch('sys.stdout', new_callable=StringIO)
-    @patch('useful.read_file')
+    @patch('useful.read_toml_file')
     def test_genparam_amount_senderkey(self, mock_read_file, mock_stdout):
 
         # Mock the return value of read_file
@@ -279,7 +279,7 @@ tx_default_fee = 300
         cmd.run()
 
         # Verify that read_file was called with the correct arguments
-        mock_read_file.assert_called_once_with('/app/data/alice.key', True)
+        mock_read_file.assert_called_once_with('/app/data/alice.key')
 
         # # Get the printed output
         output = mock_stdout.getvalue()
@@ -291,7 +291,7 @@ tx_default_fee = 300
     # Test genparam with amount and sender_key in pem format
     # bbt transaction -genparam --amount 1000 -sender_key alice.key
     @patch('sys.stdout', new_callable=StringIO)
-    @patch('useful.read_file')
+    @patch('useful.read_pem_file')
     def test_genparam_amount_senderkey_pem(self, mock_read_file, mock_stdout):
         # Mock the return value of read_file
         mock_read_file.return_value = '-----BEGIN PRIVATE KEY-----\nMIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQg9UgQ6ADRTosvl43bg5zp\nWU3cFFnuMA0MO5mQpw0yIKmhRANCAAS0+wZKso7C2qmxYsbEvK88us9aop4JTDb9\nnjAqlYPw6ik7Iybiu1aYtVggdWSDfJrEVQcuNdcWGuKohHfU/F6X\n-----END PRIVATE KEY-----\n'
@@ -335,7 +335,7 @@ tx_default_fee = 300
         # Call the method to generate parameters to stdio
         cmd.run()
         # Verify that read_file was called with the correct arguments
-        mock_read_file.assert_called_once_with('/app/data/alice.key', False)
+        mock_read_file.assert_called_once_with('/app/data/alice.key')
         # # Get the printed output
         output = mock_stdout.getvalue()
         # # # Check if the expected output is in the printed output
@@ -345,7 +345,7 @@ tx_default_fee = 300
     # Test genparam with fee, recipient, change
     # bbt transaction -genparam --amount 1000 -sender_key alice.pem -inform pem -fee 500 -recipient mg7k4cWKZAH6dHFAk4GPjuWFvmFZBHKf7s -change mg7k4cWKZAH6dHFAk4GPjuWFvmFZBHKf7s
     @patch('sys.stdout', new_callable=StringIO)
-    @patch('useful.read_file')
+    @patch('useful.read_pem_file')
     def test_genparam_fee_recipient_change(self, mock_read_file, mock_stdout):
         # Mock the return value of read_file
         mock_read_file.return_value = '-----BEGIN PRIVATE KEY-----\nMIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQg9UgQ6ADRTosvl43bg5zp\nWU3cFFnuMA0MO5mQpw0yIKmhRANCAAS0+wZKso7C2qmxYsbEvK88us9aop4JTDb9\nnjAqlYPw6ik7Iybiu1aYtVggdWSDfJrEVQcuNdcWGuKohHfU/F6X\n-----END PRIVATE KEY-----\n'
@@ -397,7 +397,7 @@ tx_default_fee = 500
         # Call the method to generate parameters to stdio
         cmd.run()
         # Verify that read_file was called with the correct arguments
-        mock_read_file.assert_called_once_with('/app/data/alice.key', False)
+        mock_read_file.assert_called_once_with('/app/data/alice.key')
         output = mock_stdout.getvalue()
         # # # Check if the expected output is in the printed output
         self.assertIn(expected_output, output)
@@ -441,7 +441,7 @@ tx_default_fee = 300
     # ------------------------------------------------------------------------------------
     # Test paramfile flag
     # bbt transaction -paramfile input_file.toml
-    @patch('transaction.read_file')
+    @patch('transaction.read_toml_file')
     @patch('sys.stdout', new_callable=StringIO)
     def test_paramfile(self, mock_stdout, mock_read_file):
 
@@ -506,7 +506,7 @@ tx_default_fee = 300
     # ------------------------------------------------------------------------------------
     # Test paramfile flag with no inputs in the file
     # bbt transaction -paramfile input_file.toml
-    @patch('transaction.read_file')
+    @patch('transaction.read_toml_file')
     @patch('sys.stdout', new_callable=StringIO)
     def test_paramfile_no_inputs(self, mock_stdout, mock_read_file):
         # Mock the read_file function to return a dictionary without the required key
@@ -564,7 +564,7 @@ tx_default_fee = 300
     # ------------------------------------------------------------------------------------
     # Test paramfile flag with no inputs in the file
     # bbt transaction -paramfile input_file.toml
-    @patch('transaction.read_file')
+    @patch('transaction.read_toml_file')
     @patch('sys.stdout', new_callable=StringIO)
     def test_paramfile_no_outputs(self, mock_stdout, mock_read_file):
         # Mock the read_file function to return a dictionary without the required 'transactionoutput' key
@@ -611,7 +611,7 @@ tx_default_fee = 300
     # ------------------------------------------------------------------------------------
     # Test paramfile flag with change address provided in the file
     # bbt transaction -paramfile input_file.toml
-    @patch('transaction.read_file')
+    @patch('transaction.read_toml_file')
     @patch('sys.stdout', new_callable=StringIO)
     def test_paramfile_no_changeaddress(self, mock_stdout, mock_read_file):
         # Mock the read_file function to return the provided configuration

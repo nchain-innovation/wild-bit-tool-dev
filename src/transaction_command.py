@@ -6,6 +6,7 @@ from useful import write_to_file, write_to_stdout, add_interface_to_config
 
 from tx_engine import interface_factory
 from typing import Any, Dict
+import traceback
 
 
 class TransactionCommand:
@@ -20,6 +21,9 @@ class TransactionCommand:
                  inform='toml',
                  fee=300,
                  recipient=None,
+                 op_return_data=None,
+                 op_return_data_is_file=False,
+                 op_return_only=False,
                  change=None):
 
         self.paramfile = paramfile
@@ -35,7 +39,9 @@ class TransactionCommand:
         self.recipient = recipient
         self.change = change
         self.key_type = network_to_key_type(self.network)
-
+        self.op_return_data = op_return_data
+        self.op_return_data_is_file = op_return_data_is_file
+        self.op_return_data_only = op_return_only
         # if network is running in docker, aka in-a-sandbox
         if network == 'regtest':
             print("JAS: NOT IMPLEMENTED YET")
@@ -67,6 +73,7 @@ class TransactionCommand:
             tx = build_tx(self.paramfile)
         except KeyError as e:
             print(f"Error: Missing key: {e} in the parameter file:  '{self.paramfile}'. Please check the file and try again.")
+            traceback.print_exc()
             exit(1)
         except ValueError as e:
             print(f"Error: {e} Please check the parameter file: '{self.paramfile}' and try again.")
@@ -94,6 +101,10 @@ class TransactionCommand:
             i += 1
 
         return vin
+
+    # --------------------------------------------------------------
+    def tx_in_full(self, txid: str) -> str:
+        return self.interface.get_raw_transaction(txid)
 
     # --------------------------------------------------------------
     def find_inputs(self, data_dict):
@@ -128,11 +139,18 @@ class TransactionCommand:
         # create transaction inputs (vin)
         data_dict['transactioninput'] = []
 
+        downloaded_txns = {}
         for utxo in sender_utxo:
+            # download the full tx via the bitcoin api (and store it so we don't spam the api)
+            if utxo['tx_hash'] not in downloaded_txns:
+                txn_full = self.tx_in_full(utxo['tx_hash'])
+                downloaded_txns[utxo['tx_hash']] = txn_full
+
             data_dict['transactioninput'].append({
                 'tx_hash': utxo['tx_hash'],
                 'tx_pos': utxo['tx_pos'],
                 'amount': utxo['value'],
+                'input_tx_hash': downloaded_txns[utxo['tx_hash']],
                 'private_key_for_signing': key_for_signing
             })
 
@@ -154,16 +172,47 @@ class TransactionCommand:
         # find UTXO's for sender
         if self.amount and (self.sender or self.sender_key):
             self.find_inputs(data_dict)
-
+        elif self.op_return_data_only:
+            # the user must choose an input. add a placeholder for now
+            data_dict['transactioninput'] = [{
+                'tx_hash': "tx_id",
+                'tx_pos': "tx_index (integer value)",
+                'amount': "amount (integer value)",
+                'input_tx_hash': "input_tx_hash",
+                'private_key_for_signing': "key_for_signing"
+            }]
         # if receiver is specified, create transaction outputs (vout)
         if self.recipient:
             data_dict['transactionoutput'] = []
-            data_dict['transactionoutput'].append({
-                'public_key': self.recipient,
-                'amount': self.amount,
-                'op_return': False,
-                'data_to_encode': ''
-            })
+            if self.op_return_data is None:
+                data_dict['transactionoutput'].append({
+                    'public_key': self.recipient,
+                    'amount': self.amount,
+                    'op_return': False,
+                    'data_to_encode': ''
+                })
+            else:
+                if self.op_return_data_only:
+                    data_dict['transactionoutput'].append({
+                        'op_return': True,
+                        'data_to_encode': self.op_return_data,
+                        'data_to_encode_file': self.op_return_data_is_file
+                    })
+                else:
+                    data_dict['transactionoutput'].append({
+                        'public_key': self.recipient,
+                        'amount': self.amount,
+                        'op_return': True,
+                        'data_to_encode': self.op_return_data,
+                        'data_to_encode_file': self.op_return_data_is_file
+                    })
+        else:
+            assert self.op_return_data_only is True
+            data_dict['transactionoutput'] = [{
+                'op_return': True,
+                'data_to_encode': self.op_return_data,
+                'data_to_encode_file': self.op_return_data_is_file
+            }]
 
         # if change address is specified, create change output
         if self.change:

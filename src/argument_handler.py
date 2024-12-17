@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+from pathlib import Path
 
 from key_command import KeyCommand
 from balance_command import BalanceCommand
@@ -8,6 +9,7 @@ from address_command import AddressCommand
 from consolidate_command import ConsolidateCommand
 from transaction_command import TransactionCommand
 from pkeyformat_command import PkeyformatCommand
+from utxo_command import utxoCommand
 from useful import address_regex_type
 
 # Specify the directory path
@@ -25,7 +27,7 @@ class ArgumentHandler(object):
 
     def __init__(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='WildBitTool',
             usage='''./wbt.sh <command> [<args>]
 
@@ -33,6 +35,8 @@ The most commonly used WildBitTool commands are:
    key          Generates a key from a seed and nonce
    balance      Get the balance of a bitcoin address
    address      Get the bitcoin address of a private key
+   utxo         Get a list of utxo for a given private key (toml)
+   tx_hash      Return full transactions for a given list of tx hashes
    transaction  Create a transaction
    pkeyformat   Convert a private key to and from different formats
    consolidate  Consolidate UTXOs (many inputs to one output)
@@ -56,9 +60,9 @@ The most commonly used WildBitTool commands are:
     #          - generate key from seed and nonce
     def key(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Generates a key from a seed and nonce',
-            usage='''./bbt.sh <key> [-s <seed>] [-n <nonce>] [-out <output file>] \
+            usage='''./wbt.sh <key> [-s <seed>] [-n <nonce>] [-out <output file>] \
                 [-paramfile <parameter file>] [-genparam] \
                 [-outform <toml|pem>]
                 [-l]\
@@ -99,9 +103,9 @@ Example commands:
     # balance: this is a sub-command
     def balance(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Get the balance of a bitcoin address',
-            usage="./bbt.sh balance -a <address> [-n <network>]")
+            usage="./wbt.sh balance -a <address> [-n <network>]")
         parser.add_argument('-a', '--address', help="bitcoin address", type=address_regex_type)
         parser.add_argument('-n', '--network', help="network: mainnet, testnet or regtest", choices=['mainnet', 'testnet', 'regtest'], default='testnet')
         parser.add_argument('-in', '--input', help="input file", dest='in_', metavar='IN')
@@ -122,9 +126,9 @@ Example commands:
     # address: this is a sub-command
     def address(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Get the bitcoin address of a WIF format key',
-            usage='''./bbt.sh  address \
+            usage='''./wbt.sh  address \
                         [-pkey <private_key>] \
                         [-n <network>] \
                         [-in <input file>] \
@@ -150,6 +154,45 @@ Example commands:
         )
         cmd.run()
 
+# -------------------------------------------------------------------
+    # balance: this is a sub-command
+    def utxo(self):
+        parser = argparse.ArgumentParser(
+            prog="wbt_dev.sh",
+            description='Get a list of UTXO for a given WIF key',
+            usage="./wbt_dev.sh utxo -key <key file> [-n <network>]")
+        parser.add_argument('-k', '--key', help="bitcoin WIF key file")
+        parser.add_argument('-n', '--network', help="network: mainnet, testnet or regtest", choices=['mainnet', 'testnet', 'regtest'], default='testnet')
+
+        args = parser.parse_args(sys.argv[2:])
+        cmd = utxoCommand(
+            key=args.key,
+            network=args.network)
+        cmd.run()
+
+# -------------------------------------------------------------------
+    # balance: this is a sub-command
+    def tx_hash(self):
+        parser = argparse.ArgumentParser(
+            description='Get full transaction data for a list of transaction hashes',
+            usage="./wbt_dev.sh tx_hash tx_hash1 [tx_hash2 tx_hash3]")
+
+        parser.add_argument(
+            'hashes',
+            metavar='tx_hash',
+            type=str,
+            nargs="+"
+        )
+        parser.add_argument('-n', '--network', help="network: mainnet, testnet or regtest", choices=['mainnet', 'testnet', 'regtest'], default='testnet')
+        args = parser.parse_args(sys.argv[2:])
+        for tx in args.hashes:
+            cmd = utxoCommand(
+                tx_hash=tx,
+                network=args.network)
+            print("-" * 40)
+            print(f'{cmd.run()}')
+            print("-" * 40)
+
     # -------------------------------------------------------------------
     # transaction: this is a sub-command
     #          - input file (toml)
@@ -157,9 +200,9 @@ Example commands:
     #          - network (mainnet or testnet)
     def transaction(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Create a transaction',
-            usage='''./bbt.sh <transaction> \
+            usage='''./wbt.sh <transaction> \
                 [-paramfile] \
                 [-genparam] \
                 [-out <output file>] \
@@ -172,13 +215,18 @@ Example commands:
                 [-recipient <recipient address>] \
                 [-fee <fee>] \
                 [-change <change address>] \
-                [-pem <private key in pem format>]
+                [-pem <private key in pem format>] \
+                [-op_return_data <File Path or Data on commandline] \
+                [-op_return_data_only]
 
 Example commands:
-    transaction -genparam
+    transaction -genparam s
     transaction -genparam -out my_transaction.toml
     transaction -paramfile my_transaction.toml
     transaction -paramfile my_transaction.toml -broadcast false -n testnet
+    transaction -paramfile -locking_script "LOCKING SCRIPT"
+    transaction -paramfile -opreturn_only
+    transaction -paramfile -out my_transaction.toml -auto_utxo
 ''')
         parser.add_argument("-paramfile", help="input parameter file for transaction creation")
         parser.add_argument("-genparam", help="generate parameters", action="store_true")
@@ -186,12 +234,15 @@ Example commands:
         parser.add_argument("-b", "--broadcast", help="broadcast transaction (default true)", choices=['true', 'false'], default='true')
         parser.add_argument('-n', '--network', help="network: mainnet, testnet or regtest", choices=['mainnet', 'testnet', 'regtest'], default='testnet')
         parser.add_argument("-a", "--amount", help="amount to send", type=int)
+        parser.add_argument("-auto_utxo", help="given the amount,select the utxo for input and download the transactions", type=bool)
         parser.add_argument("-sender", help="address to send from")
         parser.add_argument("-sender_key", help="file containing key to sign transaction")
         parser.add_argument("-inform", help="input file format for sender key", choices=['toml', 'pem'], default='toml')
         parser.add_argument("-fee", help="fee (default 300)", default=300, type=int)
         parser.add_argument("-recipient", help="recipient address")
         parser.add_argument("-change", help="change address")
+        parser.add_argument("-opreturn_data", metavar='<DATA_OR_FILE>', help="data to add using an opreturn and p2pkh")
+        parser.add_argument("-opreturn_data_only", help="op_return only or attach to a p2pkh", action="store_true")
         args = parser.parse_args(sys.argv[2:])
 
         # Custom validation for mutually exclusive arguments
@@ -201,6 +252,18 @@ Example commands:
         # Custom logic to warn if --broadcast is used with -genparam
         if args.genparam and args.broadcast != 'true':
             print("Warning: --broadcast has no effect when used with -genparam", file=sys.stderr)
+
+        # process the data it its there.
+        data_val_or_file: str = ""
+        data_val_is_file: bool = False
+
+        if args.opreturn_data:
+            the_file = Path(os.path.join(path, args.opreturn_data))
+            if os.path.isfile(the_file):
+                data_val_or_file = args.opreturn_data
+                data_val_is_file = True
+            else:
+                data_val_or_file = args.opreturn_data
 
         cmd = TransactionCommand(
             paramfile=args.paramfile,
@@ -216,15 +279,22 @@ Example commands:
             recipient=args.recipient,
             change=args.change
         )
+
+        if data_val_or_file is not None:
+            cmd.op_return_data = data_val_or_file
+            if args.opreturn_data_only:
+                cmd.op_return_data_only = args.opreturn_data_only
+            if data_val_is_file is True:
+                cmd.op_return_data_is_file = data_val_is_file
         cmd.run()
 
     # -------------------------------------------------------------------
     # consolidate: this is a sub-command
     def consolidate(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Consolidate UTXO',
-            usage="./bbt.sh <consolidate> \
+            usage="./wbt.sh <consolidate> \
                 [-sender_key <sender key file>] \
                 [-fee <fee>] \
                 [-inform <toml|pem>] \
@@ -254,9 +324,9 @@ Example commands:
     # pkeyformat: this is a sub-command
     def pkeyformat(self):
         parser = argparse.ArgumentParser(
-            prog="bbt.sh",
+            prog="wbt.sh",
             description='Convert a private key to different formats',
-            usage='''./bbt.sh  pkeyformat \
+            usage='''./wbt.sh  pkeyformat \
                         [-pkey <private_key>] \
                         [-in <input file>] \
                         [--inform <toml|pem>] \

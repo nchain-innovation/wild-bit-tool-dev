@@ -1,9 +1,10 @@
 # from tx_engine.tx.bsv_factory import bsv_factory
 from tx_engine import Tx, TxIn, TxOut, p2pkh_script, Script, address_to_public_key_hash
-from tx_engine.engine.op_codes import OP_RETURN, OP_FALSE
 from tx_engine import Wallet, interface_factory
 
-from useful import read_toml_file, print_amounts, set_regtest_config
+from useful import read_toml_file, print_amounts, set_regtest_config, path
+from pathlib import Path
+import os
 
 # -------------------------------------------------------------------
 # -------------------------------------------------------------------
@@ -25,21 +26,34 @@ def build_tx(filename: str) -> str:
         if not outs["op_return"]:
             payment_addr: str = outs["public_key"]
             amt: int = outs["amount"]
-            # locking_script = p2pkh_script(decode_base58(payment_addr))
             locking_script = p2pkh_script(address_to_public_key_hash(payment_addr))
             vouts.append(TxOut(amount=amt, script_pubkey=locking_script))
             amt_total_out += amt
         else:
             data_to_add = outs["data_to_encode"]
-            op_return_script = Script([OP_FALSE, OP_RETURN, data_to_add.encode()])
-            vouts.append(TxOut(amount=0, script_pubkey=op_return_script))
+            is_file = outs["data_to_encode_file"]
+            if is_file:
+                the_file = Path(os.path.join(path, data_to_add))
+                with open(the_file, 'rb') as datafile:
+                    data_val = datafile.read().hex()
+            else:
+                data_val = data_to_add.encode('utf-8').hex()
+
+            if "public_key" not in outs and "amount" not in outs:
+                op_return_script = Script.parse_string(f'OP_FALSE OP_RETURN 0x{data_val}')
+                vouts.append(TxOut(amount=0, script_pubkey=op_return_script))
+            else:
+                payment_addr = outs["public_key"]
+                amt = outs["amount"]
+                op_return_script = Script.parse_string(f'OP_FALSE OP_RETURN 0x{data_val}')
+                locking_script = p2pkh_script(address_to_public_key_hash(payment_addr)) + op_return_script
+                vouts.append(TxOut(amount=amt, script_pubkey=locking_script))
 
     # Validate that 'transactionoutput' key exists
     if "transactioninput" not in config:
         raise KeyError("transactioninput")
     amt_total_in: int = 0
     for ins in config["transactioninput"]:
-        # vins.append(TxIn(prev_tx=bytes.fromhex(ins["tx_hash"]), prev_index=ins["tx_pos"]))
         vins.append(TxIn(prev_tx=ins["tx_hash"], prev_index=ins["tx_pos"]))
         amt_total_in += ins["amount"]
 
@@ -82,7 +96,7 @@ def build_tx(filename: str) -> str:
 def broadcast_tx(tx_hex: str, filename: str) -> str:
     params = read_toml_file(filename)
     config = params['interface']
-    if config['network'] == 'regtest':
+    if config['network_type'] == 'regtest':
         set_regtest_config(config)
 
     bsv_client = interface_factory.set_config(config)
