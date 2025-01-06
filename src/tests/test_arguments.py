@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
-import sys
-from argument_handler import ArgumentHandler
+
 
 def run_tests(test_class):
     suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
@@ -11,38 +10,38 @@ def run_tests(test_class):
 
 class TestArgumentHandler(unittest.TestCase):
 
-    @patch('sys.argv', ['bbt.sh', 'key'])
+    @patch('sys.argv', ['wbt.sh', 'key'])
     def test_key_command(self):
         # handler = ArgumentHandler()
         # self.assertTrue(hasattr(handler, 'key'))
         pass
 
-    # @patch('sys.argv', ['bbt.sh', 'balance'])
+    # @patch('sys.argv', ['wbt.sh', 'balance'])
     # def test_balance_command(self):
     #     handler = ArgumentHandler()
     #     self.assertTrue(hasattr(handler, 'balance'))
 
-    # @patch('sys.argv', ['bbt.sh', 'address'])
+    # @patch('sys.argv', ['wbt.sh', 'address'])
     # def test_address_command(self):
     #     handler = ArgumentHandler()
     #     self.assertTrue(hasattr(handler, 'address'))
 
-    # @patch('sys.argv', ['bbt.sh', 'transaction'])
+    # @patch('sys.argv', ['wbt.sh', 'transaction'])
     # def test_transaction_command(self):
     #     handler = ArgumentHandler()
     #     self.assertTrue(hasattr(handler, 'transaction'))
 
-    # @patch('sys.argv', ['bbt.sh', 'pkeyformat'])
+    # @patch('sys.argv', ['wbt.sh', 'pkeyformat'])
     # def test_pkeyformat_command(self):
     #     handler = ArgumentHandler()
     #     self.assertTrue(hasattr(handler, 'pkeyformat'))
 
-    # @patch('sys.argv', ['bbt.sh', 'consolidate'])
+    # @patch('sys.argv', ['wbt.sh', 'consolidate'])
     # def test_consolidate_command(self):
     #     handler = ArgumentHandler()
     #     self.assertTrue(hasattr(handler, 'consolidate'))
 
-    # @patch('sys.argv', ['bbt.sh', 'unknown'])
+    # @patch('sys.argv', ['wbt.sh', 'unknown'])
     # def test_unknown_command(self):
     #     with self.assertRaises(SystemExit):
     #         ArgumentHandler()
@@ -59,7 +58,7 @@ class TestArgumentHandler(unittest.TestCase):
 
 # Next test - transaction parameters
     # # ------------------------------------------------------------------------------------
-    # # Test warning of genparam with broadcast 
+    # # Test warning of genparam with broadcast
     # # bbt transaction -genparam --broadcast false
     # @patch('sys.stdout', new_callable=StringIO)
     # def test_genparam_broadcast_warning(self, mock_stdout):
@@ -83,4 +82,3 @@ class TestArgumentHandler(unittest.TestCase):
 
     #     # Check if the expected output is in the printed output
     #     self.assertIn(expected_output, output)
-

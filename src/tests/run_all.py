@@ -3,7 +3,6 @@ import test_bitcoin_balance as tbb
 import test_address as ta
 import test_pkeyformat as tpf
 import test_transaction as tt
-import test_arguments as targ
 
 # run all tests
 if __name__ == '__main__':
@@ -12,9 +11,5 @@ if __name__ == '__main__':
     ta.run_tests(ta.TestAddressCommand)
     tpf.run_tests(tpf.TestPkeyformatCommand)
     tt.run_tests(tt.TestTransactionCommand)
-    # targ.run_tests(targ.TestArgumentHandler)
-
-
-
     print('End of test run.')
     print('Exiting.')

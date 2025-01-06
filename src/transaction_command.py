@@ -1,25 +1,31 @@
 from useful import network_to_key_type, load_key_from_file
 from transaction import build_tx, broadcast_tx
 
-from useful import write_to_file, write_to_stdout, add_network_type_to_config
-from key_functions import set_regtest_config
+from useful import write_to_file, write_to_stdout, add_interface_to_config
+# from key_functions import set_regtest_config
 
-from tx_engine.tx.bsv_factory import bsv_factory
+from tx_engine import interface_factory
+from typing import Any, Dict
+import traceback
+
 
 class TransactionCommand:
-    def __init__(self, paramfile=None, 
-                 genparam=False, 
-                 out=None, 
-                 broadcast='true', 
-                 network='testnet', 
-                 amount=None, 
-                 sender=None, 
-                 sender_key=None, 
-                 inform='toml', 
-                 fee=300, 
-                 recipient=None, 
+    def __init__(self, paramfile=None,
+                 genparam=False,
+                 out=None,
+                 broadcast='true',
+                 network='testnet',
+                 amount=None,
+                 sender=None,
+                 sender_key=None,
+                 inform='toml',
+                 fee=300,
+                 recipient=None,
+                 op_return_data=None,
+                 op_return_data_is_file=False,
+                 op_return_only=False,
                  change=None):
-        
+
         self.paramfile = paramfile
         self.genparam = genparam
         self.out = out
@@ -33,30 +39,41 @@ class TransactionCommand:
         self.recipient = recipient
         self.change = change
         self.key_type = network_to_key_type(self.network)
-
-        config = {"type":network}
-
-        # if network is running in docker, aka in-a-sandbox 
+        self.op_return_data = op_return_data
+        self.op_return_data_is_file = op_return_data_is_file
+        self.op_return_data_only = op_return_only
+        # if network is running in docker, aka in-a-sandbox
         if network == 'regtest':
-            network = 'insandbox'
-            set_regtest_config(config)
+            print("JAS: NOT IMPLEMENTED YET")
+            raise NotImplementedError
 
-        self.bsv_client = bsv_factory.set_config(config)
+        if self.network == "mock":
+            config = {
+                "interface_type": "mock",
+                "network_type": self.network
+            }
+        else:
+            config = {
+                "interface_type": "woc",
+                "network_type": self.network,
+            }
 
+        self.interface = interface_factory.set_config(config)
 
     # --------------------------------------------------------------
     # Create transaction from input file
-    def create_transaction(self): 
-
+    def create_transaction(self):
         print(f'\n  -> Running bbt transaction,   input file={self.paramfile}, network={self.network}')
 
-        tx = None 
+        # print("JAS: DEBUG: config: ", self.config)
+        tx = None
 
         # Build transaction
         try:
             tx = build_tx(self.paramfile)
         except KeyError as e:
             print(f"Error: Missing key: {e} in the parameter file:  '{self.paramfile}'. Please check the file and try again.")
+            traceback.print_exc()
             exit(1)
         except ValueError as e:
             print(f"Error: {e} Please check the parameter file: '{self.paramfile}' and try again.")
@@ -71,13 +88,10 @@ class TransactionCommand:
         else:
             print('\nNot broadcasting transaction')
 
-
     # --------------------------------------------------------------
     # Get UTXO's for an amount
     def utxo_amount(self, address, amount):
-
-        unspent = self.bsv_client.get_utxo(address)
-
+        unspent = self.interface.get_utxo(address)
         sum = 0
         vin = []
         i = 0
@@ -87,26 +101,30 @@ class TransactionCommand:
             i += 1
 
         return vin
-    
+
+    # --------------------------------------------------------------
+    def tx_in_full(self, txid: str) -> str:
+        return self.interface.get_raw_transaction(txid)
 
     # --------------------------------------------------------------
     def find_inputs(self, data_dict):
         key_for_signing = "<key for signing>"
-        
         if self.sender_key:
             toml_ = True
             if (self.inform == 'pem'):
                 toml_ = False
 
             key_type = network_to_key_type(self.network)
-            key_for_signing, sender_address  = load_key_from_file(self.sender_key, toml_, key_type)
+            key_for_signing, sender_address = load_key_from_file(self.sender_key, toml_, key_type)
+            # print(f"JAS: DEBUG: key_for_signing: {key_for_signing}, sender_address: {sender_address}")
+            self.sender = sender_address
 
         elif self.sender:
             sender_address = self.sender
 
-        # get balance for the sender 
-        sb = self.bsv_client.get_balance(sender_address)
-        print('JAS: sender_balance', sb)
+        # get balance for the sender
+        # sb = self.bsv_client.get_balance(sender_address)
+        sb = self.interface.get_balance(sender_address)
         sender_balance = int(sb['confirmed']) + int(sb['unconfirmed'])
 
         # check if sender has enough balance to send amount
@@ -121,25 +139,30 @@ class TransactionCommand:
         # create transaction inputs (vin)
         data_dict['transactioninput'] = []
 
+        downloaded_txns = {}
         for utxo in sender_utxo:
-            
+            # download the full tx via the bitcoin api (and store it so we don't spam the api)
+            if utxo['tx_hash'] not in downloaded_txns:
+                txn_full = self.tx_in_full(utxo['tx_hash'])
+                downloaded_txns[utxo['tx_hash']] = txn_full
+
             data_dict['transactioninput'].append({
                 'tx_hash': utxo['tx_hash'],
                 'tx_pos': utxo['tx_pos'],
                 'amount': utxo['value'],
+                'input_tx_hash': downloaded_txns[utxo['tx_hash']],
                 'private_key_for_signing': key_for_signing
             })
-
 
     # --------------------------------------------------------------
     # Generate transaction parameters
     def generate_parameters(self):
         print('Generating parameters')
-
-        data_dict = {}
-
+        data_dict: Dict[Any, Any] = {}
         # add network type to config
-        add_network_type_to_config(data_dict, self.network)
+        # add_network_type_to_config(data_dict, self.network)
+        add_interface_to_config(data_dict, self.network)
+        # print("JAS: DEBUG: data_dict: ", data_dict)
 
         if self.sender:
             sender_address = self.sender
@@ -149,16 +172,47 @@ class TransactionCommand:
         # find UTXO's for sender
         if self.amount and (self.sender or self.sender_key):
             self.find_inputs(data_dict)
-
+        elif self.op_return_data_only:
+            # the user must choose an input. add a placeholder for now
+            data_dict['transactioninput'] = [{
+                'tx_hash': "tx_id",
+                'tx_pos': "tx_index (integer value)",
+                'amount': "amount (integer value)",
+                'input_tx_hash': "input_tx_hash",
+                'private_key_for_signing': "key_for_signing"
+            }]
         # if receiver is specified, create transaction outputs (vout)
         if self.recipient:
             data_dict['transactionoutput'] = []
-            data_dict['transactionoutput'].append({
-                'public_key': self.recipient,
-                'amount': self.amount,
-                'op_return': False,
-                'data_to_encode': ''
-            })
+            if self.op_return_data is None:
+                data_dict['transactionoutput'].append({
+                    'public_key': self.recipient,
+                    'amount': self.amount,
+                    'op_return': False,
+                    'data_to_encode': ''
+                })
+            else:
+                if self.op_return_data_only:
+                    data_dict['transactionoutput'].append({
+                        'op_return': True,
+                        'data_to_encode': self.op_return_data,
+                        'data_to_encode_file': self.op_return_data_is_file
+                    })
+                else:
+                    data_dict['transactionoutput'].append({
+                        'public_key': self.recipient,
+                        'amount': self.amount,
+                        'op_return': True,
+                        'data_to_encode': self.op_return_data,
+                        'data_to_encode_file': self.op_return_data_is_file
+                    })
+        else:
+            assert self.op_return_data_only is True
+            data_dict['transactionoutput'] = [{
+                'op_return': True,
+                'data_to_encode': self.op_return_data,
+                'data_to_encode_file': self.op_return_data_is_file
+            }]
 
         # if change address is specified, create change output
         if self.change:
@@ -175,7 +229,6 @@ class TransactionCommand:
         # add fee
         data_dict['tx_info']['tx_default_fee'] = self.fee
 
-
         # write to file or stdout; default is stdout
         if self.out:
             write_to_file(self.out, data_dict)
@@ -183,15 +236,12 @@ class TransactionCommand:
         else:
             write_to_stdout(data_dict)
 
-
     # --------------------------------------------------------------
     # Run the command
     def run(self):
-
         # if parameter file is provided, use this to create transaction
         if self.paramfile:
             self.create_transaction()
-            
 
         # generate parameter file from command line parameters
         elif self.genparam:
@@ -201,6 +251,3 @@ class TransactionCommand:
             print('Error: input file or parameters required to generate transaction')
             print('Use -h or --help for help')
             exit(1)
-
-
-    

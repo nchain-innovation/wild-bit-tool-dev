@@ -2,4 +2,4 @@
 
 # build and tag the image locally
 
-docker build --tag wildbittool .
+docker build --no-cache --tag wildbittool .

@@ -19,7 +19,7 @@ Optional:
 
 Try running the help command:
 
-`./bbt.sh -h`
+`./wbt.sh -h`
 
 ## Digging Deeper
 
@@ -35,11 +35,11 @@ git clone git@github.com:nchain-innovation/wildbittool-dev.git
 
 ### Build It
 
-To be filled in
+To build the docker image locally, please exectue the command below.
+```bash
+./build.sh
+```
 
-### Publish It
-
-To be filled in
 
 ---
 
@@ -61,8 +61,3 @@ python3 -m coverage report  | grep "/wild-bit-tool-dev/src"
 
 ---
 
-# To Do
-
-```
-- [ ] Add Regtest
-```
