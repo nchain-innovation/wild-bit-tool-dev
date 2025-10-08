@@ -2,6 +2,7 @@ import hashlib
 import pprint
 import os
 from useful import network_to_key_type
+from time import sleep
 
 # set directory path to the environment variable or default to /app/data
 if 'DATA_PATH' in os.environ:
@@ -31,15 +32,22 @@ def generate_key(nameSeed, nonce, network='testnet', pem=False):
 # get balance for address, network
 # return balance
 def balance(address, network):
-    config = {"type": network}
-    # if network is running in docker, aka in-a-sandbox
-    if config['type'] == 'insandbox':
-        set_regtest_config(config)
+    config = {
+            "interface_type": "woc",
+            "network_type": network,
+        }
 
-    bsv_client = interface_factory.set_config(config)
+    interface = interface_factory.set_config(config)
+    test_balance = interface.get_balance(address)
+    #config = {"type": network}
+    # if network is running in docker, aka in-a-sandbox
+    #if config['type'] == 'insandbox':
+    #    set_regtest_config(config)
+
+    #bsv_client = interface_factory.set_config(config)
     # bsv_client = bsv_factory.set_config(config)
 
-    test_balance = bsv_client.get_balance(address)
+    #test_balance = bsv_client.get_balance(address)
     print('\n------------------------------------------------------------------------------------')
     print('PubKey: \t{}\nBalance: \t{}'.format(address, test_balance))
     print('------------------------------------------------------------------------------------\n')
@@ -49,10 +57,14 @@ def balance(address, network):
 # get utxo for address, network
 # return utxo
 def utxo(address, network):
-    config = {"type": network}
+    config = {
+        "interface_type": "woc",
+        "network_type": network,
+    }
+    #config = {"type": network}
     # if network is running in docker, aka in-a-sandbox
-    if config['type'] == 'insandbox':
-        set_regtest_config(config)
+    #if config['type'] == 'insandbox':
+    #    set_regtest_config(config)
 
     bsv_client = interface_factory.set_config(config)
     # bsv_client = bsv_factory.set_config(config)
@@ -69,11 +81,14 @@ def utxo(address, network):
 # get all utxo's for address, network
 # return vin
 def utxo_all(address, network):
-    config = {"type": network}
-
+    #config = {"type": network}
+    config = {
+        "interface_type": "woc",
+        "network_type": network,
+    }
     # if network is running in docker, aka in-a-sandbox
-    if config['type'] == 'insandbox':
-        set_regtest_config(config)
+    #if config['type'] == 'insandbox':
+    #    set_regtest_config(config)
     bsv_client = interface_factory.set_config(config)
     unspent = bsv_client.get_utxo(address)
 
@@ -105,3 +120,17 @@ def utxo_amount(address, network, amount):
         i += 1
 
     return vin
+
+def get_full_tx(txid: str, network: str) -> str:
+    #config = {"type": network}
+    config = {
+        "interface_type": "woc",
+        "network_type": network,
+    }
+    bsv_client = interface_factory.set_config(config)
+    full_tx = bsv_client.get_raw_transaction(txid)
+    print(f"TX ID {txid} -> Full TX: {full_tx}")
+    print('\n<-------------------------------------------------------->\n')
+    print('Sleeping for 1 second to avoid rate limits...\n')
+    sleep(1)
+    return full_tx

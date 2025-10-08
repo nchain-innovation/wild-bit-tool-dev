@@ -1,5 +1,5 @@
-from useful import add_network_type_to_config, load_key_from_file, write_to_file, write_to_stdout
-from key_functions import balance, utxo_all
+from useful import add_network_type_to_config, add_interface_to_config, load_key_from_file, write_to_file, write_to_stdout
+from key_functions import balance, utxo_all, get_full_tx
 from typing import Dict, Any
 
 
@@ -18,7 +18,7 @@ class ConsolidateCommand:
         self.fee = fee
         self.inform = inform
         self.out = out
-
+        self.network = network
         if network == 'regtest':
             self.network = 'insandbox'
             self.key_type = 'test'
@@ -37,7 +37,7 @@ class ConsolidateCommand:
         data_dict: Dict[Any, Any] = {}
         # add network type to config
         add_network_type_to_config(data_dict, self.network)
-
+        add_interface_to_config(data_dict, self.network)
         if self.sender:
             sender_address = self.sender
         else:
@@ -68,11 +68,13 @@ class ConsolidateCommand:
         data_dict['transactioninput'] = []
 
         for utxo in sender_utxo:
+            full_tx = get_full_tx(utxo['tx_hash'], self.network)
             data_dict['transactioninput'].append({
                 'tx_hash': utxo['tx_hash'],
                 'tx_pos': utxo['tx_pos'],
                 'amount': utxo['value'],
-                'private_key_for_signing': key_for_signing
+                'private_key_for_signing': key_for_signing,
+                'input_tx_hash': full_tx
             })
 
         # print out number of utxo's
