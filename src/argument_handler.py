@@ -216,8 +216,8 @@ Example commands:
                 [-fee <fee>] \
                 [-change <change address>] \
                 [-pem <private key in pem format>] \
-                [-op_return_data <File Path or Data on commandline] \
-                [-op_return_data_only]
+                [-opreturn_data <File Path or Data on commandline] \
+                [-opreturn_data_only]
 
 Example commands:
     transaction -genparam s

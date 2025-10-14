@@ -184,7 +184,7 @@ class TransactionCommand:
         # if receiver is specified, create transaction outputs (vout)
         if self.recipient:
             data_dict['transactionoutput'] = []
-            if self.op_return_data is None:
+            if not self.op_return_data:
                 data_dict['transactionoutput'].append({
                     'public_key': self.recipient,
                     'amount': self.amount,
