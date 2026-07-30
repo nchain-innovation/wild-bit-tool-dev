@@ -1,8 +1,7 @@
 from useful import network_to_key_type, load_key_from_file
 from transaction import build_tx, broadcast_tx
 
-from useful import write_to_file, write_to_stdout, add_interface_to_config
-# from key_functions import set_regtest_config
+from useful import write_to_file, write_to_stdout, add_interface_to_config, build_interface_config
 
 from tx_engine import interface_factory
 from typing import Any, Dict
@@ -42,23 +41,9 @@ class TransactionCommand:
         self.op_return_data = op_return_data
         self.op_return_data_is_file = op_return_data_is_file
         self.op_return_data_only = op_return_only
-        # if network is running in docker, aka in-a-sandbox
-        if network == 'regtest':
-            print("JAS: NOT IMPLEMENTED YET")
-            raise NotImplementedError
-
-        if self.network == "mock":
-            config = {
-                "interface_type": "mock",
-                "network_type": self.network
-            }
-        else:
-            config = {
-                "interface_type": "woc",
-                "network_type": self.network,
-            }
-
-        self.interface = interface_factory.set_config(config)
+        # regtest -> local node over JSON-RPC, testnet/mainnet -> WoC,
+        # mock -> in-memory (see build_interface_config)
+        self.interface = interface_factory.set_config(build_interface_config(self.network))
 
     # --------------------------------------------------------------
     # Create transaction from input file
@@ -159,10 +144,7 @@ class TransactionCommand:
     def generate_parameters(self):
         print('Generating parameters')
         data_dict: Dict[Any, Any] = {}
-        # add network type to config
-        # add_network_type_to_config(data_dict, self.network)
         add_interface_to_config(data_dict, self.network)
-        # print("JAS: DEBUG: data_dict: ", data_dict)
 
         if self.sender:
             sender_address = self.sender

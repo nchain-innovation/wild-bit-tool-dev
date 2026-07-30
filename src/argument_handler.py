@@ -303,7 +303,7 @@ Example commands:
 
         parser.add_argument("-sender_key", help="file containing key to sign transaction")
         parser.add_argument("-sender", help="address to send from")
-        parser.add_argument("-n", "--network", help="network: mainnet or testnet", choices=['mainnet', 'testnet'], default='testnet')
+        parser.add_argument("-n", "--network", help="network: mainnet, testnet or regtest", choices=['mainnet', 'testnet', 'regtest'], default='testnet')
         parser.add_argument("-fee", help="fee (default 300)", default=300, type=int)
         parser.add_argument("-inform", help="input file format for sender key", choices=['toml', 'pem'], default='toml')
         parser.add_argument("-out", help="output file", dest='out', metavar='OUTFILE')

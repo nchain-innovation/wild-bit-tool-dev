@@ -100,41 +100,45 @@ def network_to_key_type(network: str) -> str:
 
 
 # -------------------------------------------------------------------
-# Helper function to convert type to network_type
-def network_to_network_type(network: str) -> str:
-    match network:
-        case "testnet":
-            return "test"
-
-        case "mainnet":
-            return "main"
-
-        case "regtest":
-            return "reg"
-
-        case "mock":
-            return "test"
-
-        case _:
-            print(f"Invalid network type: {network}")
-            exit(1)
-
-
-# -------------------------------------------------------------------
-# Helper function for adding network type to config
-def add_network_type_to_config(config: MutableMapping[str, Any], network: str) -> None:
-    config['bsv_client'] = {}
-    config["bsv_client"]["type"] = network
-    config["bsv_client"]["network_type"] = network_to_network_type(network)
+# Helper function to build a tx_engine interface config for a network.
+#
+#   testnet / mainnet -> WhatsOnChain (woc) REST interface
+#   regtest           -> local node over JSON-RPC (rpc); connection
+#                        details come from the RPC_USER / RPC_PASSWORD /
+#                        RPC_HOST environment variables, defaulting to the
+#                        docker regtest node (bitcoin / bitcoin / node1:18332)
+#   mock              -> in-memory mock interface (unit tests)
+#
+# regtest follows testnet consensus rules, so the interface network_type is
+# reported as "testnet" (the woc/rpc interfaces map that to "test" internally).
+def build_interface_config(network: str) -> MutableMapping[str, Any]:
+    if network in ("testnet", "mainnet"):
+        return {"interface_type": "woc", "network_type": network}
+    if network == "mock":
+        return {"interface_type": "mock", "network_type": "testnet"}
+    if network == "regtest":
+        return {
+            "interface_type": "rpc",
+            "network_type": "testnet",
+            "user": os.environ.get("RPC_USER", "bitcoin"),
+            "password": os.environ.get("RPC_PASSWORD", "bitcoin"),
+            "address": os.environ.get("RPC_HOST", "node1:18332"),
+        }
+    print(f"Invalid network type: {network}")
+    exit(1)
 
 
 #  -------------------------------------------------------------------
-# Helper function to add interface to config
-# TODO: JAS: make this work with CHAIN-GANG CHAINGANG CHAIN GANG
+# Helper function to add the interface routing to a generated param file.
+# Only non-secret routing info (interface_type + network_type) is persisted;
+# RPC credentials are injected from the environment at broadcast time
+# (see transaction.broadcast_tx).
 def add_interface_to_config(config: MutableMapping[str, Any], network: str) -> None:
-    config['interface'] = {}
-    config['interface']['interface_type'] = 'woc'
-    config['interface']['network_type'] = network
+    iface = build_interface_config(network)
+    config['interface'] = {
+        'interface_type': iface['interface_type'],
+        'network_type': iface['network_type'],
+    }
 
 
 # -------------------------------------------------------------------
@@ -175,19 +179,6 @@ def load_key_from_file(filename: str, toml: bool, key_type: str) -> tuple[str, s
     except Exception as e:
         print(f"An unexpected error occurred: {e}.  Check filetype and contents.")
     exit(1)
-
-
-# -------------------------------------------------------------------
-# Helper function to set regtest to defaults
-# TODO: make this configurable
-# JAS: NEEDS UPDATING FOR CHAIN-GANG CHAINGANG CHAIN GANG
-def set_regtest_config(config: MutableMapping[str, Any]) -> None:
-
-    config['type'] = 'insandbox'
-    config["user"] = "bitcoin"
-    config["password"] = "bitcoin"
-    config["address"] = "node1:18332"
-    config["network_type"] = "regtest"
 
 
 # -------------------------------------------------------------------

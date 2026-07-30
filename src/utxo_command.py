@@ -1,4 +1,4 @@
-from useful import load_key_from_file, network_to_key_type
+from useful import load_key_from_file, network_to_key_type, build_interface_config
 from tx_engine import interface_factory
 
 
@@ -25,13 +25,7 @@ class utxoCommand:
             print("Error: No key provided.")
             return
 
-        # TODO: fix the regtest config
-
-        config = {
-            "interface_type": "woc",
-            "network_type": self.network,
-        }
-
+        config = build_interface_config(self.network)
         interface = interface_factory.set_config(config)
 
         key = load_key_from_file(self.key, True, self.key_type)
@@ -47,10 +41,7 @@ class utxoCommand:
         if self.tx_hash is None:
             raise ValueError("No tx_hash supplied to download a full transaction")
 
-        config = {
-            "interface_type": "woc",
-            "network_type": self.network,
-        }
+        config = build_interface_config(self.network)
         interface = interface_factory.set_config(config)
         raw_tx = interface.get_raw_transaction(self.tx_hash)
         return raw_tx
