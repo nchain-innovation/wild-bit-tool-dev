@@ -39,8 +39,11 @@ run_docker() {
   # Print the command before running it
   # echo "docker run -it --rm ${network_option} -v ${volume_mount} ${src_volume} -e DATA_PATH=$DATA_PATH $IMAGE_NAME \"$@\""
   
-  # Execute the Docker command
-  docker run -it --rm ${network_option} -v "${volume_mount}" ${src_volume} -e DATA_PATH="$DATA_PATH" $IMAGE_NAME "$@"
+  # Execute the Docker command.
+  # RPC_USER / RPC_PASSWORD / RPC_HOST are forwarded from the host env only
+  # when set (docker '-e VAR' with no value); otherwise the regtest RPC
+  # interface falls back to its docker-node defaults (bitcoin/bitcoin/node1:18332).
+  docker run -it --rm ${network_option} -v "${volume_mount}" ${src_volume} -e DATA_PATH="$DATA_PATH" -e RPC_USER -e RPC_PASSWORD -e RPC_HOST $IMAGE_NAME "$@"
 }
 
 # Echo DEV_MODE status
