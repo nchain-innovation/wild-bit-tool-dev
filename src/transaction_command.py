@@ -206,8 +206,12 @@ class TransactionCommand:
                         'data_to_encode': self.op_return_data,
                         'data_to_encode_file': self.op_return_data_is_file
                     })
-        else:
-            assert self.op_return_data_only is True
+        # no recipient: only emit an OP_RETURN output when data-only was
+        # requested. Otherwise leave the outputs unset so genparam can
+        # produce a skeleton the user completes later (a bare -genparam,
+        # or an inputs-only template). Previously this asserted
+        # op_return_data_only and crashed those valid cases.
+        elif self.op_return_data_only:
             data_dict['transactionoutput'] = [{
                 'op_return': True,
                 'data_to_encode': self.op_return_data,
