@@ -7,6 +7,9 @@ import os
 
 sys.path.append('../')
 from key_command import KeyCommand
+# The data directory the tool writes to (DATA_PATH env, default /app/data).
+# Derived from the source so the test is not tied to a fixed path.
+from useful import path as data_path
 
 
 def run_tests(test_class):
@@ -58,7 +61,7 @@ class TestKeyGenerator(unittest.TestCase):
         with patch('builtins.open', new_callable=mock_open()) as m:
             self.kg.output_file = "output_file.txt"
             self.kg.generate_parameters()
-            m.assert_called_with('/app/data/output_file.txt', 'w')
+            m.assert_called_with(os.path.join(data_path, 'output_file.txt'), 'w')
             m().write.assert_called_with(expected_output)
 
     # test creating parameters from the seed and nonce and writting to stdout as string representation of dictionary

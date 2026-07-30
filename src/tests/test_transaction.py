@@ -187,18 +187,25 @@ tx_default_fee = 300
             {'height': 1631214, 'tx_pos': 0, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 1000},
             {'height': 1631214, 'tx_pos': 1, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 2100}
         ]}
+        # genparam downloads the full input tx (build_tx needs it to sign),
+        # so the mock must return a raw tx for that hash.
+        cmd.interface.transactions = {
+            'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e': 'deadbeef'
+        }
 
         # Expected output
         expected_output = """Generating parameters\n\n\n[[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 0
 amount = 1000
+input_tx_hash = "deadbeef"
 private_key_for_signing = "<key for signing>"
 
 [[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 1
 amount = 2100
+input_tx_hash = "deadbeef"
 private_key_for_signing = "<key for signing>"
 
 [interface]
@@ -250,18 +257,25 @@ tx_default_fee = 300
             {'height': 1631214, 'tx_pos': 0, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 1000},
             {'height': 1631214, 'tx_pos': 1, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 2100}
         ]}
+        # genparam downloads the full input tx (build_tx needs it to sign),
+        # so the mock must return a raw tx for that hash.
+        cmd.interface.transactions = {
+            'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e': 'deadbeef'
+        }
 
         # Expected output
         expected_output = """Generating parameters\n\n\n[[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 0
 amount = 1000
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 1
 amount = 2100
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [interface]
@@ -310,17 +324,24 @@ tx_default_fee = 300
             {'height': 1631214, 'tx_pos': 0, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 1000},
             {'height': 1631214, 'tx_pos': 1, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 2100}
         ]}
+        # genparam downloads the full input tx (build_tx needs it to sign),
+        # so the mock must return a raw tx for that hash.
+        cmd.interface.transactions = {
+            'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e': 'deadbeef'
+        }
         # Expected output
         expected_output = """[[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 0
 amount = 1000
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 1
 amount = 2100
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [interface]
@@ -366,17 +387,24 @@ tx_default_fee = 300
             {'height': 1631214, 'tx_pos': 0, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 1000},
             {'height': 1631214, 'tx_pos': 1, 'tx_hash': 'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e', 'value': 2100}
         ]}
+        # genparam downloads the full input tx (build_tx needs it to sign),
+        # so the mock must return a raw tx for that hash.
+        cmd.interface.transactions = {
+            'ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e': 'deadbeef'
+        }
         # Expected output
         expected_output = """[[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 0
 amount = 1000
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [[transactioninput]]
 tx_hash = "ba37f74000558e145f1e1789c642fb69d2384b39211f4943c46de016f791451e"
 tx_pos = 1
 amount = 2100
+input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [[transactionoutput]]
