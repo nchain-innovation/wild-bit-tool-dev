@@ -9,5 +9,7 @@ if not exist "data" (
     mkdir "data"
 )
 
-@REM Run the image
-docker run -it --rm -v "%cd%\data:/app/data" %IMAGE_NAME% %*
+@REM Run the image.
+@REM RPC_USER / RPC_PASSWORD / RPC_HOST are forwarded from the host env when
+@REM set; otherwise the regtest RPC interface uses its docker-node defaults.
+docker run -it --rm -v "%cd%\data:/app/data" -e RPC_USER -e RPC_PASSWORD -e RPC_HOST %IMAGE_NAME% %*

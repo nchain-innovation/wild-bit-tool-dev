@@ -2,7 +2,7 @@
 from tx_engine import Tx, TxIn, TxOut, p2pkh_script, Script, address_to_public_key_hash
 from tx_engine import Wallet, interface_factory
 
-from useful import read_toml_file, print_amounts, set_regtest_config, path
+from useful import read_toml_file, print_amounts, build_interface_config, path
 from pathlib import Path
 import os
 
@@ -95,9 +95,14 @@ def build_tx(filename: str) -> str:
 # Broadcast the transaction
 def broadcast_tx(tx_hex: str, filename: str) -> str:
     params = read_toml_file(filename)
-    config = params['interface']
-    if config['network_type'] == 'regtest':
-        set_regtest_config(config)
+    iface = params['interface']
+    # The param file stores only non-secret routing (interface_type +
+    # network_type). For the local RPC node, rebuild the full config so
+    # credentials are injected from the environment rather than the file.
+    if iface.get('interface_type') == 'rpc':
+        config = build_interface_config('regtest')
+    else:
+        config = iface
 
     bsv_client = interface_factory.set_config(config)
 

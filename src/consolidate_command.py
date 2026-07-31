@@ -1,4 +1,4 @@
-from useful import add_network_type_to_config, add_interface_to_config, load_key_from_file, write_to_file, write_to_stdout
+from useful import add_interface_to_config, load_key_from_file, write_to_file, write_to_stdout, network_to_key_type
 from key_functions import balance, utxo_all, get_full_tx
 from typing import Dict, Any
 
@@ -19,24 +19,13 @@ class ConsolidateCommand:
         self.inform = inform
         self.out = out
         self.network = network
-        if network == 'regtest':
-            self.network = 'insandbox'
-            self.key_type = 'test'
-        elif network == 'mainnet':
-            self.key_type = 'main'
-        elif network == 'testnet':
-            self.key_type = 'test'
-        elif network == 'mock':
-            self.key_type = 'test'
-        else:
-            print(f"Invalid network type: {network}")
-            exit(1)
+        # validates the network and yields the tx_engine key type
+        # (regtest -> BSV_Testnet); used when loading .pem sender keys
+        self.key_type = network_to_key_type(network)
 
     def run(self):
         print(f'\n  -> Running bbt consolidate,   network={self.network}')
         data_dict: Dict[Any, Any] = {}
-        # add network type to config
-        add_network_type_to_config(data_dict, self.network)
         add_interface_to_config(data_dict, self.network)
         if self.sender:
             sender_address = self.sender

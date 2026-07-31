@@ -12,7 +12,7 @@ else:
 
 from tx_engine import interface_factory
 from tx_engine import Wallet, create_pem_from_wallet
-from useful import set_regtest_config
+from useful import build_interface_config
 
 
 def generate_key(nameSeed, nonce, network='testnet', pem=False):
@@ -32,22 +32,10 @@ def generate_key(nameSeed, nonce, network='testnet', pem=False):
 # get balance for address, network
 # return balance
 def balance(address, network):
-    config = {
-            "interface_type": "woc",
-            "network_type": network,
-        }
+    config = build_interface_config(network)
 
     interface = interface_factory.set_config(config)
     test_balance = interface.get_balance(address)
-    #config = {"type": network}
-    # if network is running in docker, aka in-a-sandbox
-    #if config['type'] == 'insandbox':
-    #    set_regtest_config(config)
-
-    #bsv_client = interface_factory.set_config(config)
-    # bsv_client = bsv_factory.set_config(config)
-
-    #test_balance = bsv_client.get_balance(address)
     print('\n------------------------------------------------------------------------------------')
     print('PubKey: \t{}\nBalance: \t{}'.format(address, test_balance))
     print('------------------------------------------------------------------------------------\n')
@@ -57,18 +45,9 @@ def balance(address, network):
 # get utxo for address, network
 # return utxo
 def utxo(address, network):
-    config = {
-        "interface_type": "woc",
-        "network_type": network,
-    }
-    #config = {"type": network}
-    # if network is running in docker, aka in-a-sandbox
-    #if config['type'] == 'insandbox':
-    #    set_regtest_config(config)
+    config = build_interface_config(network)
 
     bsv_client = interface_factory.set_config(config)
-    # bsv_client = bsv_factory.set_config(config)
-
     unspent = bsv_client.get_utxo(address)
     print('\n<-------------------------------------------------------->\n')
     print(f"Unspent UTXOs: \t{unspent}")
@@ -81,52 +60,19 @@ def utxo(address, network):
 # get all utxo's for address, network
 # return vin
 def utxo_all(address, network):
-    #config = {"type": network}
-    config = {
-        "interface_type": "woc",
-        "network_type": network,
-    }
-    # if network is running in docker, aka in-a-sandbox
-    #if config['type'] == 'insandbox':
-    #    set_regtest_config(config)
+    config = build_interface_config(network)
     bsv_client = interface_factory.set_config(config)
     unspent = bsv_client.get_utxo(address)
 
     vin = []
-    # i = 0
     for utxo in unspent:
         vin.append(utxo)
 
     return vin
 
 
-# get uxto for a certain amount
-# return utxo
-def utxo_amount(address, network, amount):
-    config = {"type": network}
-    # if network is running in docker, aka in-a-sandbox
-    if config['type'] == 'insandbox':
-        set_regtest_config(config)
-
-    bsv_client = interface_factory.set_config(config)
-    unspent = bsv_client.get_utxo(address)
-
-    sum = 0
-    vin = []
-    i = 0
-    while sum < amount:
-        sum += unspent[i]['value']
-        vin.append(unspent[i])
-        i += 1
-
-    return vin
-
 def get_full_tx(txid: str, network: str) -> str:
-    #config = {"type": network}
-    config = {
-        "interface_type": "woc",
-        "network_type": network,
-    }
+    config = build_interface_config(network)
     bsv_client = interface_factory.set_config(config)
     full_tx = bsv_client.get_raw_transaction(txid)
     print(f"TX ID {txid} -> Full TX: {full_tx}")

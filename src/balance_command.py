@@ -1,4 +1,4 @@
-from useful import load_key_from_file, list_keys, network_to_key_type
+from useful import load_key_from_file, list_keys, network_to_key_type, build_interface_config
 from tx_engine import interface_factory
 
 
@@ -25,13 +25,7 @@ class BalanceCommand:
             print("Error: No address provided.")
             return
 
-        # TODO: fix the regtest config
-
-        config = {
-            "interface_type": "woc",
-            "network_type": self.network,
-        }
-
+        config = build_interface_config(self.network)
         interface = interface_factory.set_config(config)
         balance = interface.get_balance(self.address)
         return balance
