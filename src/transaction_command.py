@@ -146,11 +146,6 @@ class TransactionCommand:
         data_dict: Dict[Any, Any] = {}
         add_interface_to_config(data_dict, self.network)
 
-        if self.sender:
-            sender_address = self.sender
-        else:
-            sender_address = "<sender address>"
-
         # find UTXO's for sender
         if self.amount and (self.sender or self.sender_key):
             self.find_inputs(data_dict)
@@ -163,6 +158,17 @@ class TransactionCommand:
                 'input_tx_hash': "input_tx_hash",
                 'private_key_for_signing': "key_for_signing"
             }]
+
+        # Resolve the sender address after find_inputs, which populates
+        # self.sender from the key file when -sender_key is used. Computing it
+        # earlier left the change output as the literal "<sender address>"
+        # placeholder (which build_tx rejects) whenever -sender_key was given
+        # without an explicit -change.
+        if self.sender:
+            sender_address = self.sender
+        else:
+            sender_address = "<sender address>"
+
         # if receiver is specified, create transaction outputs (vout)
         if self.recipient:
             data_dict['transactionoutput'] = []
