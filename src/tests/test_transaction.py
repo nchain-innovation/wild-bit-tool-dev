@@ -209,8 +209,8 @@ input_tx_hash = "deadbeef"
 private_key_for_signing = "<key for signing>"
 
 [interface]
-interface_type = "woc"
-network_type = "mock"
+interface_type = "mock"
+network_type = "testnet"
 
 [tx_info]
 create_change_output = true
@@ -279,8 +279,8 @@ input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [interface]
-interface_type = "woc"
-network_type = "mock"
+interface_type = "mock"
+network_type = "testnet"
 
 [tx_info]
 create_change_output = true
@@ -345,8 +345,8 @@ input_tx_hash = "deadbeef"
 private_key_for_signing = "cVoVmd5zY69LEevwGa5iq1Ba3oBc6J8xxUqdKuJCtuFWUJJngPPP"
 
 [interface]
-interface_type = "woc"
-network_type = "mock"
+interface_type = "mock"
+network_type = "testnet"
 
 [tx_info]
 create_change_output = true
@@ -414,8 +414,8 @@ op_return = false
 data_to_encode = ""
 
 [interface]
-interface_type = "woc"
-network_type = "mock"
+interface_type = "mock"
+network_type = "testnet"
 
 [tx_info]
 create_change_output = true
@@ -457,8 +457,8 @@ tx_default_fee = 500
         mock_open.assert_called_once_with('/app/data/output_file.toml', 'w')
         # Check if the file is written to
         mock_open().write.assert_called_once_with("""[interface]
-interface_type = "woc"
-network_type = "mock"
+interface_type = "mock"
+network_type = "testnet"
 
 [tx_info]
 create_change_output = true
