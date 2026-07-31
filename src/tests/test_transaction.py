@@ -284,7 +284,7 @@ network_type = "testnet"
 
 [tx_info]
 create_change_output = true
-change_output_public_key = "<sender address>"
+change_output_public_key = "mg7k4cWKZAH6dHFAk4GPjuWFvmFZBHKf7s"
 tx_default_fee = 300
 
 
@@ -350,7 +350,7 @@ network_type = "testnet"
 
 [tx_info]
 create_change_output = true
-change_output_public_key = "<sender address>"
+change_output_public_key = "mg7k4cWKZAH6dHFAk4GPjuWFvmFZBHKf7s"
 tx_default_fee = 300
 """
         # Call the method to generate parameters to stdio
