@@ -698,3 +698,66 @@ tx_default_fee = 300
 
         # Check if the expected error message is in the printed output
         self.assertIn(expected_error_message, output)
+
+    # ------------------------------------------------------------------------------------
+    # Broadcasting refuses a parameter file whose [interface] does not match --network
+    # bbt transaction -paramfile regtest_file.toml --network testnet
+    @patch('transaction_command.broadcast_tx')
+    @patch('transaction_command.build_tx')
+    @patch('transaction.read_toml_file')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_broadcast_refuses_interface_network_mismatch(self, mock_stdout, mock_read_file, mock_build_tx, mock_broadcast_tx):
+        mock_read_file.return_value = {"interface": {"interface_type": "rpc", "network_type": "testnet"}}
+
+        cmd = TransactionCommand(paramfile='/app/data/input_file.toml', network='testnet', broadcast='true')
+
+        with self.assertRaises(SystemExit) as context:
+            cmd.run()
+
+        self.assertEqual(context.exception.code, 1)
+        self.assertIn("interface_type = 'rpc' but --network testnet needs 'woc'", mock_stdout.getvalue())
+        mock_build_tx.assert_not_called()
+        mock_broadcast_tx.assert_not_called()
+
+    # a mainnet file is refused on testnet even though both use woc
+    @patch('transaction_command.broadcast_tx')
+    @patch('transaction_command.build_tx')
+    @patch('transaction.read_toml_file')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_broadcast_refuses_woc_network_type_mismatch(self, mock_stdout, mock_read_file, mock_build_tx, mock_broadcast_tx):
+        mock_read_file.return_value = {"interface": {"interface_type": "woc", "network_type": "mainnet"}}
+
+        cmd = TransactionCommand(paramfile='/app/data/input_file.toml', network='testnet', broadcast='true')
+
+        with self.assertRaises(SystemExit):
+            cmd.run()
+
+        self.assertIn("network_type = 'mainnet' but --network testnet needs 'testnet'", mock_stdout.getvalue())
+        mock_broadcast_tx.assert_not_called()
+
+    # a matching file is broadcast as before
+    @patch('transaction_command.broadcast_tx')
+    @patch('transaction_command.build_tx', return_value='deadbeef')
+    @patch('transaction.read_toml_file')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_broadcast_proceeds_when_interface_matches_network(self, mock_stdout, mock_read_file, mock_build_tx, mock_broadcast_tx):
+        mock_read_file.return_value = {"interface": {"interface_type": "woc", "network_type": "testnet"}}
+
+        cmd = TransactionCommand(paramfile='/app/data/input_file.toml', network='testnet', broadcast='true')
+        cmd.run()
+
+        mock_broadcast_tx.assert_called_once_with('deadbeef', '/app/data/input_file.toml')
+
+    # -broadcast false builds without checking the interface
+    @patch('transaction_command.broadcast_tx')
+    @patch('transaction_command.build_tx', return_value='deadbeef')
+    @patch('transaction.read_toml_file')
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_no_broadcast_skips_interface_check(self, mock_stdout, mock_read_file, mock_build_tx, mock_broadcast_tx):
+        mock_read_file.return_value = {"interface": {"interface_type": "rpc", "network_type": "testnet"}}
+
+        cmd = TransactionCommand(paramfile='/app/data/input_file.toml', network='testnet', broadcast='false')
+        cmd.run()
+
+        mock_build_tx.assert_called_once()
+        mock_broadcast_tx.assert_not_called()

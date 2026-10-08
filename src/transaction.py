@@ -92,6 +92,22 @@ def build_tx(filename: str) -> str:
 
 
 # -------------------------------------------------------------------
+# broadcast_tx routes by the [interface] block of the parameter file, not by
+# --network. Refuse to broadcast when the two disagree, e.g. a file generated
+# with --network regtest (rpc) used with --network testnet (woc).
+def check_interface_matches_network(filename: str, network: str) -> None:
+    iface = read_toml_file(filename).get('interface')
+    if iface is None:
+        raise ValueError(f"'{filename}' has no [interface] block.")
+    expected = build_interface_config(network)
+    for field in ('interface_type', 'network_type'):
+        if iface.get(field) != expected[field]:
+            raise ValueError(
+                f"'{filename}' has {field} = '{iface.get(field)}' but --network {network} needs '{expected[field]}'. "
+                f"Regenerate the file with -genparam --network {network}; its inputs came from the other network.")
+
+
+# -------------------------------------------------------------------
 # Broadcast the transaction
 def broadcast_tx(tx_hex: str, filename: str) -> str:
     params = read_toml_file(filename)
