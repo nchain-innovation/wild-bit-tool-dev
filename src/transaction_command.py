@@ -1,5 +1,5 @@
 from useful import network_to_key_type, load_key_from_file
-from transaction import build_tx, broadcast_tx
+from transaction import build_tx, broadcast_tx, check_interface_matches_network
 
 from useful import write_to_file, write_to_stdout, add_interface_to_config, build_interface_config
 
@@ -55,6 +55,8 @@ class TransactionCommand:
 
         # Build transaction
         try:
+            if self.broadcast == 'true':
+                check_interface_matches_network(self.paramfile, self.network)
             tx = build_tx(self.paramfile)
         except KeyError as e:
             print(f"Error: Missing key: {e} in the parameter file:  '{self.paramfile}'. Please check the file and try again.")
